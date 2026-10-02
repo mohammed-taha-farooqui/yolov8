@@ -82,7 +82,7 @@ def api_stats():
 @app.route('/api/set_source', methods=['POST'])
 def api_set_source():
     """Switch video source to sample video, uploaded file, or live webcam."""
-    data = request.get_json() or {}
+    data = request.get_json(force=True, silent=True) or {}
     source_type = data.get('type', 'file')
     source_path = data.get('source', '')
 
@@ -158,7 +158,7 @@ def api_list_videos():
 @app.route('/api/set_threshold', methods=['POST'])
 def api_set_threshold():
     """Configure overcrowding alert threshold."""
-    data = request.get_json() or {}
+    data = request.get_json(force=True, silent=True) or {}
     threshold = data.get('threshold')
     try:
         threshold = int(threshold)

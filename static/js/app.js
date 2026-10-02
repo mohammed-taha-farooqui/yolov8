@@ -470,9 +470,21 @@ function closeUploadModal() {
 document.addEventListener('DOMContentLoaded', () => {
     initTimelineChart();
 
+    // Auto-reconnect if video stream ever encounters an error or EOF
+    const videoImg = document.getElementById('videoStreamPlayer');
+    if (videoImg) {
+        videoImg.addEventListener('error', () => {
+            console.warn("Video stream connection lost, reconnecting in 1s...");
+            setTimeout(() => {
+                videoImg.src = '/video?' + new Date().getTime();
+            }, 1000);
+        });
+    }
+
     // Start stats polling loop every 1.5 seconds
     setInterval(fetchStats, 1500);
     fetchStats();
+
 
     // Drag and drop video upload
     const dropZone = document.getElementById('dropZone');

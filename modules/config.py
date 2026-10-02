@@ -106,9 +106,17 @@ def get_yolo_model():
         return model
 
 def open_camera(source):
-    """Open a VideoCapture instance for file or camera index."""
-    if isinstance(source, str) and source.isdigit():
-        cap = cv2.VideoCapture(int(source))
-    else:
-        cap = cv2.VideoCapture(source)
-    return cap
+    """Open a VideoCapture instance for file or camera index with DirectShow acceleration on Windows."""
+    try:
+        if (isinstance(source, str) and source.isdigit()) or isinstance(source, int):
+            idx = int(source)
+            cap = cv2.VideoCapture(idx, cv2.CAP_DSHOW)
+            if not cap.isOpened():
+                cap = cv2.VideoCapture(idx)
+        else:
+            cap = cv2.VideoCapture(source)
+        return cap
+    except Exception as e:
+        print(f"[ERROR] Failed to open video source {source}: {e}")
+        return cv2.VideoCapture()
+
