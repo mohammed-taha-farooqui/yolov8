@@ -1,183 +1,461 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Real-Time Crowd Monitoring</title>
-    
-    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta name="description" content="CrowdSentry AI - Enterprise AI Security Operations Dashboard for Real-Time Crowd Dynamics & Threat Intelligence">
+    <title>CROWD SENTRY AI - Security Operations Dashboard</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Chart.js for real-time telemetry graphs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
-<body class="text-xl">
-    
-    <nav class=" flex bg-slate-700 justify-between p-3  text-white">
-        <div class=" mx-2 p-2">
-          Real-Time Crowd Monitoring
+<body>
+
+    <div class="app-layout">
+        
+        <!-- ============================================================
+             1. LEFT SIDEBAR (Dark Navy / Indigo)
+             ============================================================ -->
+        <aside class="app-sidebar" id="appSidebar">
+            <div class="sidebar-brand">
+                <div class="brand-icon-box">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    </svg>
+                </div>
+                <div class="sidebar-brand-text">
+                    <span class="brand-title-side">CROWD SENTRY</span>
+                    <span class="brand-badge-side">AI OPS</span>
+                </div>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav class="sidebar-nav">
+                <a href="#dashboard" class="nav-item active">
+                    <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="7" height="9"></rect>
+                        <rect x="14" y="3" width="7" height="5"></rect>
+                        <rect x="14" y="12" width="7" height="9"></rect>
+                        <rect x="3" y="16" width="7" height="5"></rect>
+                    </svg>
+                    <span>Dashboard</span>
+                </a>
+
+                <a href="#analytics" class="nav-item">
+                    <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="20" x2="18" y2="10"></line>
+                        <line x1="12" y1="20" x2="12" y2="4"></line>
+                        <line x1="6" y1="20" x2="6" y2="14"></line>
+                    </svg>
+                    <span>Analytics</span>
+                </a>
+
+                <a href="#logs" class="nav-item">
+                    <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                    <span>Logs</span>
+                </a>
+
+                <a href="#settings" class="nav-item">
+                    <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                    <span>Settings</span>
+                </a>
+            </nav>
+
+            <!-- Sidebar Status Footer -->
+            <div class="sidebar-footer">
+                <div class="cluster-status">
+                    <span class="cluster-dot"></span>
+                    <span class="cluster-label">Zone Node #1 Active</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ============================================================
+             MAIN WRAPPER (Header + Dashboard Body)
+             ============================================================ -->
+        <div class="main-wrapper">
+            
+            <!-- 2. TOP HEADER -->
+            <header class="app-header">
+                <div class="header-left">
+                    <div class="header-logo-icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="header-title">CROWD SENTRY AI</div>
+                        <div class="header-subtitle">Real-Time Crowd Dynamics & Threat Intelligence</div>
+                    </div>
+                </div>
+
+                <div class="header-right">
+                    <!-- Green SYSTEM ACTIVE Status -->
+                    <div class="status-indicator-badge">
+                        <span class="status-pulse-dot"></span>
+                        <span>SYSTEM ACTIVE</span>
+                    </div>
+
+                    <!-- Current Timestamp -->
+                    <div class="header-clock" id="liveClock">--:--:--</div>
+
+                    <!-- Notification / Siren Toggle Icon -->
+                    <button class="header-icon-btn active" id="btnAudioToggle" onclick="toggleAudioAlerts()" title="Toggle Threat Siren Audio">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                        </svg>
+                    </button>
+
+                    <!-- User Profile Avatar -->
+                    <div class="user-profile-badge" title="Security Admin">
+                        <div class="user-avatar">SA</div>
+                        <div class="user-info-text">
+                            <span class="user-name">SecAdmin</span>
+                            <span class="user-role">Operations</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- MAIN DASHBOARD CONTENT -->
+            <main class="dashboard-body">
+
+                <!-- Dynamic High-Severity Anomaly Alert Banner -->
+                <div class="alert-banner" id="globalAlertBanner">
+                    <div class="alert-content">
+                        <div class="alert-icon-box">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                                <line x1="12" y1="9" x2="12" y2="13"></line>
+                                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="alert-title" id="alertBannerTitle">SECURITY ANOMALY DETECTED</div>
+                            <div class="alert-desc" id="alertBannerDesc">Hazardous condition flagged by computer vision models.</div>
+                        </div>
+                    </div>
+                    <button class="btn btn-danger-action" onclick="clearAlerts()">Acknowledge & Dismiss</button>
+                </div>
+
+                <!-- 3. CONTROL PANEL + 4. DETECTION LIMIT STEPPER -->
+                <div class="control-panel-card">
+                    <!-- Left: Input Source Controls -->
+                    <div class="control-section-left">
+                        <span class="control-section-label">Input Source:</span>
+                        <div class="btn-group-sources">
+                            <button class="source-btn" id="btnSourceWebcam" onclick="setVideoSource('webcam')">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 7l-7 5 7 5V7z"></path><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
+                                Live Webcam
+                            </button>
+                            <button class="source-btn" id="btnSourceUpload" onclick="openUploadModal()">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                                Upload Video
+                            </button>
+                            <button class="source-btn active-source" id="btnSourceSample" onclick="setVideoSource('sample')">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg>
+                                Sample Feed
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Right: Detection Limit (People) Numeric Stepper -->
+                    <div class="control-section-right">
+                        <span class="control-section-label">Detection Limit (People):</span>
+                        <div class="numeric-stepper-box">
+                            <button class="stepper-action-btn" id="btnStepMinus" onclick="stepThreshold(-1)" title="Decrease detection limit">−</button>
+                            <span class="stepper-current-val" id="thresholdValue">20</span>
+                            <button class="stepper-action-btn" id="btnStepPlus" onclick="stepThreshold(1)" title="Increase detection limit">+</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================================
+                     5. KPI CARDS (4 Columns)
+                     ============================================================ -->
+                <div class="kpi-grid">
+                    <!-- CARD 1: Total Crowd Count -->
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <span class="kpi-title">Total Crowd Count</span>
+                            <div class="kpi-icon-box">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="9" cy="7" r="4"></circle>
+                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="kpi-value" id="metricCrowdCount">0</div>
+                        <div class="kpi-status-text" id="metricCrowdTrend">
+                            Steady flow
+                        </div>
+                    </div>
+
+                    <!-- CARD 2: Crowd Density -->
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <span class="kpi-title">Crowd Density</span>
+                            <span class="kpi-badge badge-low" id="metricDensityLevel">LOW</span>
+                        </div>
+                        <div class="kpi-value" id="metricDensityVal">0%</div>
+                        <div class="kpi-progress-bar-bg">
+                            <div class="kpi-progress-bar-fill" id="metricDensityBar" style="width: 0%;"></div>
+                        </div>
+                    </div>
+
+                    <!-- CARD 3: Flow & Movement -->
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <span class="kpi-title">Flow & Movement</span>
+                            <div class="kpi-icon-box" style="background: #EFF6FF; color: #2563EB;">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="kpi-value" style="font-size: 1.85rem;" id="metricDominantDir">Stationary</div>
+                        <div class="kpi-status-text">
+                            Average Velocity: <strong id="metricAvgSpeed" class="mono">0.0 px/s</strong>
+                        </div>
+                    </div>
+
+                    <!-- CARD 4: Threat Assessment -->
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <span class="kpi-title">Threat Assessment</span>
+                            <div class="kpi-icon-box" style="background: #ECFDF5; color: #059669;">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <div style="margin: 0.35rem 0 0.45rem 0;">
+                            <span class="threat-status-badge safe" id="metricThreatBadge">ZONE SECURE</span>
+                        </div>
+                        <div class="kpi-status-text">
+                            AI Object & Threat Scanner
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================================
+                     6. MAIN CONTENT LAYOUT (Two-Column Structure)
+                     LEFT: Timeline & Movement (45-50%)
+                     RIGHT: Surveillance Feed & Alert Log (50-55%)
+                     ============================================================ -->
+                <div class="dashboard-two-col">
+
+                    <!-- ========================================================
+                         LEFT COLUMN: Timeline & Movement Patterns
+                         ======================================================== -->
+                    <div class="col-left">
+                        
+                        <!-- 9. CROWD COUNT TIMELINE -->
+                        <div class="dash-card timeline-card">
+                            <div class="card-header">
+                                <div class="header-title-group">
+                                    <h3 class="card-title">Crowd Count Timeline</h3>
+                                    <span class="badge-pill-live">LIVE</span>
+                                </div>
+                                <span class="header-meta-text">Real-time occupancy intervals</span>
+                            </div>
+                            <div class="chart-wrapper">
+                                <canvas id="crowdTimelineChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- 10. DIRECTIONAL MOVEMENT PATTERNS -->
+                        <div class="dash-card movement-card">
+                            <div class="card-header">
+                                <h3 class="card-title">Directional Movement Patterns</h3>
+                                <span class="header-meta-text">Velocity & Optical Vectors</span>
+                            </div>
+
+                            <div class="direction-rows-list">
+                                <!-- North -->
+                                <div class="dir-row">
+                                    <div class="dir-label-cell">
+                                        <span class="dir-arrow">↑</span>
+                                        <span class="dir-text">North</span>
+                                    </div>
+                                    <div class="dir-bar-track">
+                                        <div class="dir-bar-value" id="dir-bar-north" style="width: 0%;"></div>
+                                    </div>
+                                    <span class="dir-count-val mono" id="dir-cnt-north">0</span>
+                                </div>
+
+                                <!-- East -->
+                                <div class="dir-row">
+                                    <div class="dir-label-cell">
+                                        <span class="dir-arrow">→</span>
+                                        <span class="dir-text">East</span>
+                                    </div>
+                                    <div class="dir-bar-track">
+                                        <div class="dir-bar-value" id="dir-bar-east" style="width: 0%;"></div>
+                                    </div>
+                                    <span class="dir-count-val mono" id="dir-cnt-east">0</span>
+                                </div>
+
+                                <!-- South -->
+                                <div class="dir-row">
+                                    <div class="dir-label-cell">
+                                        <span class="dir-arrow">↓</span>
+                                        <span class="dir-text">South</span>
+                                    </div>
+                                    <div class="dir-bar-track">
+                                        <div class="dir-bar-value" id="dir-bar-south" style="width: 0%;"></div>
+                                    </div>
+                                    <span class="dir-count-val mono" id="dir-cnt-south">0</span>
+                                </div>
+
+                                <!-- West -->
+                                <div class="dir-row">
+                                    <div class="dir-label-cell">
+                                        <span class="dir-arrow">←</span>
+                                        <span class="dir-text">West</span>
+                                    </div>
+                                    <div class="dir-bar-track">
+                                        <div class="dir-bar-value" id="dir-bar-west" style="width: 0%;"></div>
+                                    </div>
+                                    <span class="dir-count-val mono" id="dir-cnt-west">0</span>
+                                </div>
+
+                                <!-- Stationary -->
+                                <div class="dir-row">
+                                    <div class="dir-label-cell">
+                                        <span class="dir-arrow">•</span>
+                                        <span class="dir-text">Stationary</span>
+                                    </div>
+                                    <div class="dir-bar-track">
+                                        <div class="dir-bar-value" id="dir-bar-stationary" style="width: 0%;"></div>
+                                    </div>
+                                    <span class="dir-count-val mono" id="dir-cnt-stationary">0</span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- ========================================================
+                         RIGHT COLUMN: Live Surveillance Feed & Alert Log
+                         ======================================================== -->
+                    <div class="col-right">
+
+                        <!-- 7. LIVE SURVEILLANCE FEED -->
+                        <div class="dash-card video-feed-card">
+                            <div class="card-header">
+                                <div class="header-title-group">
+                                    <span class="live-dot-pulse"></span>
+                                    <h3 class="card-title">Live Surveillance Feed</h3>
+                                </div>
+                                <div class="feed-controls-group">
+                                    <button class="feed-btn" onclick="captureSnapshot()" title="Capture Frame Snapshot">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                                        Snapshot
+                                    </button>
+                                    <button class="feed-btn" onclick="toggleFullscreen()" title="Toggle Fullscreen">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
+                                        Fullscreen
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Video Stream Viewport -->
+                            <div class="video-viewport" id="videoViewport">
+                                <!-- Top HUD Status Pills -->
+                                <div class="hud-overlay-top">
+                                    <div class="hud-pill" id="hudSourcePill">SRC: video_3.mp4</div>
+                                    <div class="hud-pill" id="liveFps">FPS: --</div>
+                                </div>
+
+                                <!-- MJPEG Surveillance Stream -->
+                                <img id="videoStreamPlayer" class="video-stream-img" src="/video" alt="Real-Time Surveillance Stream">
+                            </div>
+                        </div>
+
+                        <!-- 8. LIVE ANOMALY & SECURITY ALERT LOG -->
+                        <div class="dash-card alert-log-card">
+                            <div class="card-header">
+                                <div class="header-title-group">
+                                    <h3 class="card-title">Live Anomaly & Security Alert Log</h3>
+                                </div>
+                                <div class="feed-controls-group">
+                                    <button class="feed-btn btn-clear-log" onclick="clearAlerts()" title="Clear and Acknowledge Alert Log">
+                                        Clear Log
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Log Table -->
+                            <div class="table-scroll-container">
+                                <table class="alert-data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>TIME</th>
+                                            <th>ANOMALY TYPE</th>
+                                            <th>EVENT DETAILS</th>
+                                            <th>STATUS</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="alertLogTableBody">
+                                        <tr>
+                                            <td colspan="4" style="text-align: center; color: var(--text-dim); padding: 1.5rem;">
+                                                No active security alerts logged
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </main>
         </div>
-        <ul class="flex">
-            <li class="p-2"><!-- Buttons for selecting mode -->
-                <button id="start-crowd" onclick="startCrowdMonitoring()">Start Crowd Counting</button>
-            </li>
-            <li class="p-2"> <!-- Button for starting/stopping facial detection -->
-                <button id="start-face-detection" onclick="toggleFaceDetection()">Start Face Detection</button>
-            </li>
-        </ul>
-    </nav>
-    
-   <div class="flex justify-between">
-    <!-- Video Stream -->
-    <div class="m-6 p-3">
-    <div id="video-container" style="display: none;">
-        <img id="video-stream" class="max-w-200" alt="Video Stream" style="border: 1px solid black;">
+
     </div>
-   <div class="flex"> <!-- Display Crowd Count and Weapon Detection -->
-    <h2 class="m-3" id="crowd-count-section" style="display: none;">Crowd Count: <span id="crowd-count">0</span></h2>
-    <h2 class="m-3" id="weapon-detection-section" style="display: none;"><span id="weapon-detected">weapon Detected: No</span></h2>
-   </div>
-  </div>
-    <div class="mr-7">
-    <!-- Crowd Count Graph -->
-    <canvas id="crowd-count-graph" width="600" height="400" style="display: block; margin: 20px auto;"></canvas>
+
+    <!-- Video Upload Modal -->
+    <div class="modal-backdrop" id="uploadModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 class="modal-title">Upload Video for Analysis</h3>
+                <button class="modal-close" onclick="closeUploadModal()">&times;</button>
+            </div>
+            <div class="drop-zone" id="dropZone">
+                <svg class="drop-zone-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                <div style="font-weight: 700; margin-bottom: 0.35rem; color: var(--text-main);">Drag & drop video file here</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted);">or click to browse (.mp4, .avi, .mov, .mkv)</div>
+                <input type="file" id="videoFileInput" accept=".mp4,.avi,.mov,.mkv,.webm" style="display: none;">
+            </div>
+            <div id="uploadStatusText" style="margin-top: 1rem; font-size: 0.85rem; color: var(--primary); text-align: center; font-weight: 600;"></div>
+        </div>
     </div>
-    </div>
-    <div id="face-detection-container" style="display: none;">
-        <img id="face-detection-video" alt="Face Detection Stream" style="width: 60%; border: 1px solid black;">
-    </div>
-    
-    <script>
-        let crowdCountGraph = null;
-        let crowdCountData = [];
-        let labels = [];
 
-        // Toggle Face Detection
-        // Toggle Face Detection
-function toggleFaceDetection() {
-    fetch('/toggle_face_detection')
-        .then(response => response.json())
-        .then(data => {
-            const statusMessage = data.status;
-            document.getElementById('start-face-detection').innerText = statusMessage === 'Face detection started' ? 'Stop Face Detection' : 'Start Face Detection';
-
-            const faceDetectionContainer = document.getElementById('face-detection-container');
-            if (statusMessage === 'Face detection started') {
-                faceDetectionContainer.style.display = 'block';
-                document.getElementById('face-detection-video').src = "/face_video"; // Ensure this URL is correct
-            } else {
-                faceDetectionContainer.style.display = 'none';
-            }
-        })
-        .catch(error => console.error('Error toggling face detection:', error));
-}
-
-        // Initialize the graph
-        function initializeGraph() {
-            const ctx = document.getElementById('crowd-count-graph').getContext('2d');
-            crowdCountGraph = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Crowd Count',
-                        data: crowdCountData,
-                        borderColor: 'rgba(75, 192, 192, 1)',
-                        borderWidth: 2,
-                        fill: false,
-                        tension: 0.1
-                    }]
-                },
-                options: {
-                    scales: {
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Time'
-                            }
-                        },
-                        y: {
-                            title: {
-                                display: true,
-                                text: 'Count'
-                            },
-                            beginAtZero: true
-                        }
-                    }
-                }
-            });
-        }
-
-        // Update the graph data
-        function updateGraph(count) {
-            const currentTime = new Date().toLocaleTimeString();
-            labels.push(currentTime);
-            crowdCountData.push(count);
-
-            // Keep only the last 10 data points
-            if (labels.length > 10) {
-                labels.shift();
-                crowdCountData.shift();
-            }
-
-            // Update the graph
-            crowdCountGraph.update();
-        }
-
-        // Fetch crowd count and update graph every 5 seconds
-        function startCrowdMonitoring() {
-            const videoContainer = document.getElementById('video-container');
-            const videoStream = document.getElementById('video-stream');
-            const crowdCountSection = document.getElementById('crowd-count-section');
-            const weaponDetectionSection = document.getElementById('weapon-detection-section');
-
-            videoContainer.style.display = 'block';
-            crowdCountSection.style.display = 'block';
-            weaponDetectionSection.style.display = 'block';
-
-            // Set the video stream to restart
-            videoStream.src = "/video?" + new Date().getTime(); // Adding timestamp to avoid caching
-
-            // Call the server to reset crowd count
-            fetch('/start_crowd_count')
-                .then(response => response.json())
-                .then(data => {
-                    console.log(data.status);  // Log the status to ensure it's resetting
-                })
-                .catch(error => console.error('Error starting crowd count:', error));
-
-            // Initialize the graph
-            initializeGraph();
-
-            // Periodically fetch and update crowd count every 5 seconds
-            setInterval(() => {
-                fetch('/crowd_count')
-                    .then(response => response.json())
-                    .then(data => {
-                        const count = data.count;
-                        document.getElementById('crowd-count').innerText = count;
-
-                        // Update the graph
-                        updateGraph(count);
-                    })
-                    .catch(error => console.error('Error fetching crowd count:', error));
-
-                // Fetch and update weapon detection status
-                fetch('/weapon_status')
-        .then(response => response.json())
-        .then(data => {
-            const weaponText = document.getElementById('weapon-detected');
-            if (data.weapon_detected) {
-                weaponText.innerText = "Weapon Detected: Yes";
-                weaponText.classList.add("text-red-600", "animate-pulse", "font-bold");
-                weaponText.classList.remove("text-black");
-            } else {
-                weaponText.innerText = "Weapon Detected: No";
-                weaponText.classList.add("text-black");
-                weaponText.classList.remove("text-red-600", "animate-pulse", "font-bold");
-            }
-        })
-        .catch(error => console.error('Error fetching weapon status:', error));
-}, 5000); // 5 seconds interval
-        }
-    </script>
+    <!-- Frontend Controller Script -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
 </html>

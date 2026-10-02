@@ -1,5 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { Upload, Search, AlertCircle, CheckCircle, X, AlertTriangle, Download } from 'lucide-react';
+import { 
+  Upload, Search, AlertCircle, CheckCircle, X, AlertTriangle, 
+  Download, UserCheck, Shield, Sparkles, Video
+} from 'lucide-react';
 import { API_ENDPOINTS } from '../config/api';
 
 interface Detection {
@@ -42,7 +45,6 @@ export function PersonIdentification() {
     if (faceDetectionEnabled && videoRef.current) {
       const videoUrl = `${API_ENDPOINTS.FACE_VIDEO}?t=${Date.now()}`;
       videoRef.current.src = videoUrl;
-      console.log('Starting face video stream:', videoUrl);
     }
   }, [faceDetectionEnabled]);
 
@@ -74,7 +76,6 @@ export function PersonIdentification() {
     setError(null);
 
     try {
-      // 1) Upload the face image to backend (saves to known_faces folder)
       const formData = new FormData();
       formData.append('image', uploadedFile);
       const uploadResp = await fetch(API_ENDPOINTS.UPLOAD_FACE, {
@@ -85,33 +86,18 @@ export function PersonIdentification() {
         const errJson = await uploadResp.json().catch(() => ({}));
         throw new Error(errJson.error || 'Failed to upload face image');
       }
-      
-      const uploadData = await uploadResp.json();
-      console.log(`Face uploaded and saved: ${uploadData.filename}, Total faces: ${uploadData.total_faces}`);
 
-      // 2) Toggle face detection on the backend
       const toggleResponse = await fetch(API_ENDPOINTS.TOGGLE_FACE_DETECTION);
       if (!toggleResponse.ok) throw new Error('Failed to start face detection');
       
       const toggleData = await toggleResponse.json();
-      const isEnabled = toggleData.status.includes('started');
+      const isEnabled = toggleData.status?.includes('started') || toggleData.enabled;
       setFaceDetectionEnabled(isEnabled);
 
-      // 3) Start video stream for face detection immediately
       if (isEnabled && videoRef.current) {
-        // Set the video stream source immediately
-        const videoUrl = `${API_ENDPOINTS.FACE_VIDEO}?t=${Date.now()}`;
-        videoRef.current.src = videoUrl;
-        videoRef.current.onload = () => {
-          console.log('Face video stream loaded');
-        };
-        videoRef.current.onerror = () => {
-          console.error('Face video stream error');
-          setError('Failed to load face detection stream. Make sure the backend is running.');
-        };
+        videoRef.current.src = `${API_ENDPOINTS.FACE_VIDEO}?t=${Date.now()}`;
       }
 
-      // 4) Poll match status until found
       const pollId = window.setInterval(async () => {
         try {
           const res = await fetch(API_ENDPOINTS.FACE_MATCH_STATUS);
@@ -122,7 +108,6 @@ export function PersonIdentification() {
             setSearchComplete(true);
             setIsSearching(false);
 
-            // Fetch screenshot blob
             const shotRes = await fetch(API_ENDPOINTS.FACE_SCREENSHOT);
             if (shotRes.ok) {
               const blob = await shotRes.blob();
@@ -132,11 +117,6 @@ export function PersonIdentification() {
 
             clearInterval(pollId);
             setStatusPoller(null);
-            
-            // Log match details including confidence if available
-            if (data.confidence !== undefined) {
-              console.log(`Match found: ${data.name} with ${data.confidence}% confidence (Method: ${data.method || 'unknown'})`);
-            }
           }
         } catch (err) {
           console.error('Polling error', err);
@@ -145,7 +125,6 @@ export function PersonIdentification() {
 
       setStatusPoller(pollId);
 
-      // Safety timeout to stop after 60 seconds
       setTimeout(() => {
         setIsSearching(false);
         setSearchComplete(true);
@@ -154,13 +133,12 @@ export function PersonIdentification() {
       }, 60000);
     } catch (err) {
       console.error('Error starting face detection:', err);
-      setError((err as Error).message || 'Failed to start face detection. Make sure the backend is running.');
+      setError((err as Error).message || 'Failed to start face detection. Ensure the Flask server is running.');
       setIsSearching(false);
     }
   };
 
   const clearUpload = async () => {
-    // Disable face detection when clearing
     if (faceDetectionEnabled) {
       try {
         await fetch(API_ENDPOINTS.TOGGLE_FACE_DETECTION);
@@ -181,12 +159,8 @@ export function PersonIdentification() {
       setStatusPoller(null);
     }
     setError(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-    if (videoRef.current) {
-      videoRef.current.src = '';
-    }
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    if (videoRef.current) videoRef.current.src = '';
     if (screenshotUrl) {
       URL.revokeObjectURL(screenshotUrl);
       setScreenshotUrl(null);
@@ -194,232 +168,237 @@ export function PersonIdentification() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Upload Section */}
-      <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
-        <h2 className="text-white mb-4">Upload Person Image</h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Upload Area */}
-          <div>
-            {!uploadedImage ? (
-              <label className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-gray-700 rounded-lg cursor-pointer hover:border-gray-600 transition-colors bg-gray-950">
-                <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                  <Upload className="w-12 h-12 text-gray-500 mb-4" />
-                  <p className="text-gray-400 mb-2">Click to upload person image</p>
-                  <p className="text-gray-500">PNG, JPG (max. 10MB)</p>
-                </div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  className="hidden"
-                  accept="image/*"
-                  onChange={handleFileUpload}
-                />
-              </label>
-            ) : (
-              <div className="relative">
-                <img
-                  src={uploadedImage}
-                  alt="Uploaded person"
-                  className="w-full h-64 object-cover rounded-lg"
-                />
-                <button
-                  onClick={clearUpload}
-                  className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            )}
+    <div className="space-y-8">
+      
+      {/* Section Header */}
+      <div className="pb-2">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-violet-50 text-violet-700 border border-violet-100 mb-3 shadow-sm">
+          <Sparkles className="w-3.5 h-3.5 text-violet-600" />
+          Biometric Facial Analysis
+        </div>
+        <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 leading-tight">
+          Target Person <span className="text-gradient-corporate">Identification</span>
+        </h2>
+        <p className="text-slate-500 text-sm sm:text-base mt-1.5 max-w-2xl leading-relaxed">
+          Upload reference identity photographs to match, track, and alert across real-time video surveillance streams.
+        </p>
+      </div>
 
-            {uploadedImage && (
+      {/* Error notice */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-3 text-red-800 text-sm shadow-sm">
+          <AlertTriangle className="w-5 h-5 text-red-600 shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
+
+      {/* Upload and Workflow Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        {/* Left Column: Image Upload Card (7 cols) */}
+        <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-8 shadow-corporate-card hover:shadow-corporate-hover transition-all duration-300">
+          <div className="flex items-center justify-between mb-5 pb-3 border-b border-slate-100">
+            <div>
+              <h3 className="text-lg font-bold text-slate-900">Reference Photo Upload</h3>
+              <p className="text-xs text-slate-400">Supported formats: JPG, PNG, WEBP (Max 10MB)</p>
+            </div>
+            <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+              <Upload className="w-4 h-4" />
+            </div>
+          </div>
+
+          {!uploadedImage ? (
+            <label className="flex flex-col items-center justify-center w-full h-72 border-2 border-dashed border-indigo-200/80 rounded-2xl cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/30 transition-all duration-200 bg-slate-50/50 group">
+              <div className="flex flex-col items-center justify-center p-6 text-center">
+                <div className="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-200 shadow-sm">
+                  <Upload className="w-7 h-7" />
+                </div>
+                <p className="text-sm font-bold text-slate-800 mb-1">Click to upload target portrait</p>
+                <p className="text-xs text-slate-500">or drag and drop photograph here</p>
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                className="hidden"
+                accept="image/*"
+                onChange={handleFileUpload}
+              />
+            </label>
+          ) : (
+            <div className="relative rounded-2xl overflow-hidden border border-slate-200 shadow-sm max-h-80 bg-slate-100 flex items-center justify-center">
+              <img
+                src={uploadedImage}
+                alt="Target candidate"
+                className="max-h-80 w-auto object-contain rounded-xl"
+              />
+              <button
+                onClick={clearUpload}
+                className="absolute top-3 right-3 p-2 bg-white/90 hover:bg-red-50 text-slate-700 hover:text-red-600 rounded-full shadow-md border border-slate-200 transition-all hover:scale-105"
+                title="Remove photo"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
+          {uploadedImage && (
+            <div className="mt-6 flex flex-col sm:flex-row gap-3">
               <button
                 onClick={handleSearch}
                 disabled={isSearching}
-                className="w-full mt-4 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-700 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                className="flex-1 py-3 px-6 rounded-xl font-semibold text-sm bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-corporate-btn hover-lift disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
               >
                 {isSearching ? (
                   <>
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Searching Live Feeds...
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Scanning Video Streams...
                   </>
                 ) : (
                   <>
-                    <Search className="w-5 h-5" />
-                    Start Identification
+                    <Search className="w-4 h-4" />
+                    Initiate Facial Recognition Scan
                   </>
                 )}
               </button>
-            )}
+
+              <button
+                onClick={clearUpload}
+                className="py-3 px-5 rounded-xl font-semibold text-sm bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition-all hover-lift"
+              >
+                Clear
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Right Column: Workflow Guidelines & Status (5 cols) */}
+        <div className="lg:col-span-5 space-y-5">
+          
+          {/* How It Works Card */}
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-corporate-card">
+            <h4 className="font-bold text-slate-900 text-sm mb-3 flex items-center gap-2">
+              <Shield className="w-4 h-4 text-indigo-600" />
+              Operational Protocol
+            </h4>
+            <ol className="space-y-3 text-xs text-slate-600">
+              <li className="flex items-start gap-2.5">
+                <span className="w-5 h-5 rounded-full bg-indigo-50 text-indigo-700 font-bold flex items-center justify-center shrink-0">1</span>
+                <span>Upload high-resolution facial photo with clear frontal lighting.</span>
+              </li>
+              <li className="flex items-start gap-2.5">
+                <span className="w-5 h-5 rounded-full bg-indigo-50 text-indigo-700 font-bold flex items-center justify-center shrink-0">2</span>
+                <span>Initiate identification to encode facial landmark vectors.</span>
+              </li>
+              <li className="flex items-start gap-2.5">
+                <span className="w-5 h-5 rounded-full bg-indigo-50 text-indigo-700 font-bold flex items-center justify-center shrink-0">3</span>
+                <span>Real-time feeds are evaluated against the vector database.</span>
+              </li>
+              <li className="flex items-start gap-2.5">
+                <span className="w-5 h-5 rounded-full bg-indigo-50 text-indigo-700 font-bold flex items-center justify-center shrink-0">4</span>
+                <span>Confirmed sightings generate automatic audit captures.</span>
+              </li>
+            </ol>
           </div>
 
-          {/* Instructions */}
-          <div className="space-y-4">
-            <div className="bg-gray-950 border border-gray-800 rounded-lg p-4">
-              <h3 className="text-white mb-3">How it works</h3>
-              <ol className="space-y-2 text-gray-400 list-decimal list-inside">
-                <li>Upload a clear photo of the person you want to find</li>
-                <li>Click &quot;Start Identification&quot; to begin the search</li>
-                <li>The system will analyze all live camera feeds</li>
-                <li>Matches will appear in real-time with confidence scores</li>
-                <li>Click on any detection to view details</li>
-              </ol>
-            </div>
-
-            {isSearching && (
-              <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-blue-400 mt-0.5" />
+          {/* Search Scanning Progress */}
+          {isSearching && (
+            <div className="bg-indigo-50/80 border border-indigo-200/80 rounded-2xl p-5 shadow-corporate-card animate-pulse">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-corporate-btn">
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                </div>
                 <div>
-                  <p className="text-blue-400">Scanning in progress...</p>
-                  <p className="text-gray-400 text-sm mt-1">
-                    Analyzing live camera feeds for matches
-                  </p>
+                  <h5 className="font-bold text-indigo-950 text-sm">Deep Scan Active</h5>
+                  <p className="text-xs text-indigo-700 mt-0.5">Iterating optical frames across active camera clusters...</p>
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
-            {searchComplete && (
-              <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4 flex items-start gap-3">
-                <CheckCircle className="w-5 h-5 text-green-400 mt-0.5" />
+          {/* Match Confirmation Result Card */}
+          {searchComplete && (
+            <div className={`rounded-2xl p-6 border shadow-corporate-card transition-all ${
+              matchFound 
+                ? 'bg-emerald-50/90 border-emerald-300 text-emerald-950 shadow-[0_4px_25px_-4px_rgba(16,185,129,0.2)]' 
+                : 'bg-slate-50 border-slate-200 text-slate-700'
+            }`}>
+              <div className="flex items-start gap-3.5">
+                {matchFound ? (
+                  <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-md shrink-0">
+                    <CheckCircle className="w-6 h-6" />
+                  </div>
+                ) : (
+                  <div className="w-10 h-10 rounded-xl bg-slate-200 text-slate-600 flex items-center justify-center shrink-0">
+                    <AlertCircle className="w-5 h-5" />
+                  </div>
+                )}
                 <div className="flex-1">
-                  <p className="text-green-400">Search complete</p>
-                  <p className="text-gray-400 text-sm mt-1">
-                    {matchFound
-                      ? 'Potential match found in live feed'
-                      : 'No match found in the current session'}
+                  <h5 className="font-bold text-sm">
+                    {matchFound ? 'CONFIRMED TARGET SIGHTING' : 'Search Concluded'}
+                  </h5>
+                  <p className="text-xs mt-1 text-slate-600 leading-relaxed">
+                    {matchFound 
+                      ? 'The target individual was positively matched with high confidence in the live surveillance stream.'
+                      : 'No facial matches exceeding confidence criteria were observed in this evaluation window.'}
                   </p>
+
                   {matchFound && screenshotUrl && (
                     <button
                       onClick={() => {
                         const link = document.createElement('a');
                         link.href = screenshotUrl;
-                        link.download = 'match_screenshot.jpg';
+                        link.download = 'confirmed_match_screenshot.jpg';
                         link.click();
                       }}
-                      className="mt-3 inline-flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                      className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-md transition-all hover-lift"
                     >
-                      <Download className="w-4 h-4" />
-                      Download Screenshot
+                      <Download className="w-3.5 h-3.5" />
+                      Download Evidence Snapshot
                     </button>
                   )}
                 </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
+
         </div>
       </div>
 
-      {/* Live Camera Feed with Detections */}
+      {/* Live Face Stream Card (When active or requested) */}
       {uploadedImage && (
-        <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-white">Live Camera Feed - Face Recognition</h2>
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-corporate-card hover:shadow-corporate-hover transition-all duration-300">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
             <div className="flex items-center gap-2">
-              {faceDetectionEnabled && (
-                <>
-                  <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                  <span className="text-red-500">LIVE</span>
-                </>
-              )}
+              <Video className="w-5 h-5 text-indigo-600" />
+              <h3 className="font-bold text-slate-900 text-base">Facial Landmark Surveillance Stream</h3>
             </div>
+            {faceDetectionEnabled && (
+              <span className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                Live Analysis
+              </span>
+            )}
           </div>
 
-          <div className="relative aspect-video bg-gray-950 rounded-lg overflow-hidden">
+          <div className="relative aspect-video bg-slate-950 rounded-xl overflow-hidden shadow-inner flex items-center justify-center">
             {faceDetectionEnabled ? (
-              <>
-                <img 
-                  ref={videoRef}
-                  key={`face-video-${faceDetectionEnabled}`}
-                  src={`${API_ENDPOINTS.FACE_VIDEO}?t=${Date.now()}`}
-                  alt="Live face detection feed"
-                  className="w-full h-full object-contain"
-                  onError={(e) => {
-                    console.error('Face video stream error', e);
-                    setError('Failed to load face detection stream. Make sure the backend is running and camera is connected.');
-                  }}
-                  onLoad={() => {
-                    console.log('Face video stream loaded successfully');
-                    setError(null);
-                  }}
-                />
-                {error && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-                    <div className="text-center text-white p-4">
-                      <AlertTriangle className="w-8 h-8 mx-auto mb-2 text-red-400" />
-                      <p className="text-sm">{error}</p>
-                    </div>
-                  </div>
-                )}
-              </>
+              <img 
+                ref={videoRef}
+                src={`${API_ENDPOINTS.FACE_VIDEO}?t=${Date.now()}`}
+                alt="Live face recognition feed"
+                className="w-full h-full object-contain"
+                onError={() => setError('Live facial detection feed offline. Verify camera connection.')}
+              />
             ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <div className="text-center">
-                  <AlertCircle className="w-12 h-12 text-gray-600 mx-auto mb-2" />
-                  <p className="text-gray-500">Click "Start Identification" to begin face detection</p>
-                </div>
-              </div>
-            )}
-
-            {isSearching && (
-              <div className="absolute top-4 left-4 bg-black/70 px-3 py-2 rounded flex items-center gap-2">
-                <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
-                <span className="text-blue-400">Analyzing frames...</span>
+              <div className="text-center p-6 text-slate-400">
+                <UserCheck className="w-12 h-12 mx-auto mb-2 text-slate-600" />
+                <p className="text-sm font-medium">Click &quot;Initiate Facial Recognition Scan&quot; to begin video analysis</p>
               </div>
             )}
           </div>
         </div>
       )}
 
-      {/* Detection Results Table */}
-      {detections.length > 0 && (
-        <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
-          <h2 className="text-white mb-4">Detection Results</h2>
-          
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-800">
-                  <th className="text-left text-gray-400 pb-3">Timestamp</th>
-                  <th className="text-left text-gray-400 pb-3">Camera Location</th>
-                  <th className="text-left text-gray-400 pb-3">Confidence</th>
-                  <th className="text-left text-gray-400 pb-3">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {detections.map((detection) => (
-                  <tr key={detection.id} className="border-b border-gray-800/50 hover:bg-gray-800/30 transition-colors">
-                    <td className="py-3 text-gray-300">{detection.timestamp}</td>
-                    <td className="py-3 text-white">{detection.location}</td>
-                    <td className="py-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-24 h-2 bg-gray-700 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-yellow-400 transition-all duration-300"
-                            style={{ width: `${detection.confidence}%` }}
-                          />
-                        </div>
-                        <span className="text-white">{detection.confidence}%</span>
-                      </div>
-                    </td>
-                    <td className="py-3">
-                      {detection.confidence >= 85 && (
-                        <span className="px-2 py-1 bg-green-500/20 text-green-400 rounded text-sm">High Match</span>
-                      )}
-                      {detection.confidence >= 75 && detection.confidence < 85 && (
-                        <span className="px-2 py-1 bg-yellow-500/20 text-yellow-400 rounded text-sm">Probable</span>
-                      )}
-                      {detection.confidence < 75 && (
-                        <span className="px-2 py-1 bg-orange-500/20 text-orange-400 rounded text-sm">Low Match</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
